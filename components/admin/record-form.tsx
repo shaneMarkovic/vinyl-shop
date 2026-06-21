@@ -1,4 +1,5 @@
 import type { Record } from "@/db/schema";
+import { ImagePicker } from "@/components/admin/image-picker";
 
 const FORMATS = ["LP", "2xLP", '7"', '10"', '12"', "other"];
 const CONDITIONS = ["5", "5-", "4+", "4", "4-", "3+", "3", "3-", "2", "1"];
@@ -105,6 +106,17 @@ export function RecordForm({
         <span className="text-neutral-700">Description (Serbian)</span>
         <textarea name="description" rows={4} defaultValue={record?.description ?? ""} className={field} />
       </label>
+
+      {/* New records can attach images on creation; existing records use the
+          image manager below the form on the edit page. */}
+      {!record && (
+        <div className={labelCls}>
+          <span className="text-neutral-700">Images</span>
+          <div className="mt-1">
+            <ImagePicker />
+          </div>
+        </div>
+      )}
 
       <button type="submit" className="rounded-md bg-neutral-900 px-5 py-2 text-sm font-medium text-white">
         Save

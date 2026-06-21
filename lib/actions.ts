@@ -79,6 +79,7 @@ export async function createRecord(formData: FormData) {
     .values({ ...data, priceRsd: data.priceRsd ?? null })
     .returning({ id: records.id });
   await syncGenres(row.id, formData.get("genres") as string | null);
+  await saveImages(row.id, imageFiles(formData));
   revalidatePath("/admin");
   redirect("/admin");
 }
@@ -116,15 +117,17 @@ export async function deleteImage(recordId: number, imageId: number) {
   revalidatePath(`/admin/records/${recordId}`);
 }
 
-/** Upload one or more images for a record to R2 and record them. */
-export async function uploadImage(recordId: number, formData: FormData) {
-  await requireAuth();
-  if (!isR2Configured()) throw new Error("R2 storage is not configured");
-
-  const files = formData
+/** Pull non-empty uploaded image files off a submitted form. */
+function imageFiles(formData: FormData): File[] {
+  return formData
     .getAll("images")
     .filter((f): f is File => f instanceof File && f.size > 0);
+}
+
+/** Upload image files to R2 and record them against a record. */
+async function saveImages(recordId: number, files: File[]) {
   if (files.length === 0) return;
+  if (!isR2Configured()) throw new Error("R2 storage is not configured");
 
   const existing = await db
     .select({ sortOrder: images.sortOrder })
@@ -142,6 +145,12 @@ export async function uploadImage(recordId: number, formData: FormData) {
     hasCover = true;
     nextOrder++;
   }
+}
+
+/** Upload one or more images for a record to R2 and record them. */
+export async function uploadImage(recordId: number, formData: FormData) {
+  await requireAuth();
+  await saveImages(recordId, imageFiles(formData));
   revalidatePath(`/admin/records/${recordId}`);
 }
 

@@ -5,8 +5,7 @@ import { getFeatured, getNewArrivals, getGenresWithCounts } from "@/lib/records"
 import { publicUrl } from "@/lib/storage";
 import { RecordRow } from "@/components/record-row";
 import { VinylMark } from "@/components/logo";
-
-const PHONE = process.env.NEXT_PUBLIC_CONTACT_PHONE ?? "+381 00 000 0000";
+import { getSettings } from "@/lib/settings";
 
 export default async function HomePage(props: {
   params: Promise<{ locale: string }>;
@@ -14,13 +13,15 @@ export default async function HomePage(props: {
   const { locale } = await props.params;
   setRequestLocale(locale);
 
-  const [featured, arrivals, genres, t, tc] = await Promise.all([
+  const [featured, arrivals, genres, t, tc, settings] = await Promise.all([
     getFeatured(),
     getNewArrivals(10),
     getGenresWithCounts(),
     getTranslations("home"),
     getTranslations("catalog"),
+    getSettings(),
   ]);
+  const PHONE = settings.contactPhone;
 
   return (
     <div>

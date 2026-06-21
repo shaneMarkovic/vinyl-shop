@@ -10,6 +10,7 @@ import {
   uploadImage,
 } from "@/lib/actions";
 import { RecordForm } from "@/components/admin/record-form";
+import { ImagePicker } from "@/components/admin/image-picker";
 
 export default async function EditRecordPage(props: {
   params: Promise<{ id: string }>;
@@ -46,24 +47,15 @@ export default async function EditRecordPage(props: {
 
       {/* Image manager */}
       <div className="mt-10">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-black/60">
-            Images ({record.images.length})
-          </h2>
-          <form action={uploadImage.bind(null, recordId)} className="flex items-center gap-2">
-            <input
-              type="file"
-              name="images"
-              accept="image/*"
-              multiple
-              required
-              className="text-sm file:mr-2 file:rounded file:border-0 file:bg-black/5 file:px-2 file:py-1 file:text-sm"
-            />
-            <button className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white">
-              Upload
-            </button>
-          </form>
-        </div>
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-black/60">
+          Images ({record.images.length})
+        </h2>
+        <form action={uploadImage.bind(null, recordId)} className="mb-6">
+          <ImagePicker />
+          <button className="mt-3 rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white">
+            Upload selected
+          </button>
+        </form>
         {record.images.length === 0 ? (
           <p className="text-sm text-black/45">No images yet.</p>
         ) : (

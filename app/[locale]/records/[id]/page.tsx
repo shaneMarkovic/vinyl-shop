@@ -5,8 +5,7 @@ import { Link } from "@/i18n/navigation";
 import { getRecordById } from "@/lib/records";
 import { publicUrl } from "@/lib/storage";
 import { formatRsd } from "@/lib/format";
-
-const PHONE = process.env.NEXT_PUBLIC_CONTACT_PHONE ?? "+381 00 000 0000";
+import { getSettings } from "@/lib/settings";
 
 export default async function RecordDetailPage(props: {
   params: Promise<{ locale: string; id: string }>;
@@ -21,6 +20,7 @@ export default async function RecordDetailPage(props: {
   if (!record) notFound();
 
   const t = await getTranslations("record");
+  const PHONE = (await getSettings()).contactPhone;
   const inStock = record.quantity > 0;
   const cover = record.images[0];
 

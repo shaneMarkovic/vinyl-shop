@@ -1,14 +1,17 @@
-import { useTranslations } from "next-intl";
+import { getTranslations } from "next-intl/server";
 import { Logo } from "./logo";
+import { getSettings } from "@/lib/settings";
 
-// Contact details come from public env vars so the client can change them
-// without touching code.
-const PHONE = process.env.NEXT_PUBLIC_CONTACT_PHONE ?? "+381 00 000 0000";
-const INSTAGRAM = process.env.NEXT_PUBLIC_CONTACT_INSTAGRAM ?? "vinylvibe";
-const EMAIL = process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "shop@vinylvibe.rs";
-
-export function SiteFooter() {
-  const t = useTranslations("contact");
+// Contact details come from store settings (admin panel, DB-backed) so they can
+// be changed live without touching code or restarting the server.
+export async function SiteFooter() {
+  const [t, settings] = await Promise.all([
+    getTranslations("contact"),
+    getSettings(),
+  ]);
+  const PHONE = settings.contactPhone;
+  const INSTAGRAM = settings.contactInstagram;
+  const EMAIL = settings.contactEmail;
 
   return (
     <footer className="mt-20 border-t border-border bg-card">
