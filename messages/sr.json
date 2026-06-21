@@ -1,0 +1,73 @@
+{
+  "nav": {
+    "catalog": "Katalog",
+    "about": "O nama",
+    "contact": "Kontakt"
+  },
+  "home": {
+    "kicker": "Nove i polovne ploče",
+    "headline": "Pronađi svoju sledeću omiljenu ploču.",
+    "subhead": "Pažljivo izabrana selekcija novih i polovnih ploča. Pregledajte, zaljubite se, pa nas pozovite da je rezervišete.",
+    "browseCta": "Pogledaj katalog",
+    "callCta": "Pozovi za rezervaciju",
+    "featured": "Izdvojeno",
+    "newArrivals": "Novo u ponudi",
+    "byGenre": "Pretraga po žanru",
+    "viewAll": "Prikaži sve"
+  },
+  "catalog": {
+    "title": "Ploče",
+    "searchPlaceholder": "Pretraga po izvođaču, naslovu, izdavaču…",
+    "sortBy": "Sortiraj po",
+    "sort": {
+      "newest": "Najnovije",
+      "artistAsc": "Izvođač (A–Š)",
+      "priceAsc": "Cena (rastuće)",
+      "priceDesc": "Cena (opadajuće)"
+    },
+    "filters": "Filteri",
+    "clearAll": "Obriši sve",
+    "genre": "Žanr",
+    "format": "Format",
+    "condition": "Stanje",
+    "grade": "Ocena ploče",
+    "decade": "Decenija",
+    "price": "Cena (RSD)",
+    "new": "Novo",
+    "used": "Polovno",
+    "all": "Sve",
+    "inStockOnly": "Samo dostupno",
+    "noResults": "Nema pronađenih ploča.",
+    "resultsCount": "{count} ploča"
+  },
+  "record": {
+    "inStock": "Dostupno",
+    "outOfStock": "Nedostupno",
+    "condition": "Stanje",
+    "format": "Format",
+    "new": "Novo",
+    "used": "Polovno",
+    "media": "Ploča",
+    "sleeve": "Omot",
+    "label": "Izdavač",
+    "catalogNumber": "Kat. br.",
+    "year": "Godina",
+    "country": "Zemlja",
+    "callForPrice": "Cena na upit",
+    "callToOrder": "Pozovite za porudžbinu",
+    "backToCatalog": "Nazad na katalog"
+  },
+  "contact": {
+    "title": "Kontakt",
+    "phone": "Telefon",
+    "instagram": "Instagram",
+    "email": "Email",
+    "address": "Adresa",
+    "hours": "Radno vreme",
+    "orderNote": "Porudžbine se primaju isključivo telefonom — pozovite nas da rezervišete ploču."
+  },
+  "common": {
+    "loading": "Učitavanje…",
+    "language": "Jezik"
+  }
+}

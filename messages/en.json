@@ -1,0 +1,73 @@
+{
+  "nav": {
+    "catalog": "Catalog",
+    "about": "About",
+    "contact": "Contact"
+  },
+  "home": {
+    "kicker": "New & used vinyl",
+    "headline": "Find your next favorite record.",
+    "subhead": "A hand-picked crate of new and second-hand vinyl. Browse, fall in love, then call us to reserve it.",
+    "browseCta": "Browse the catalog",
+    "callCta": "Call to reserve",
+    "featured": "Featured",
+    "newArrivals": "New arrivals",
+    "byGenre": "Browse by genre",
+    "viewAll": "View all"
+  },
+  "catalog": {
+    "title": "Records",
+    "searchPlaceholder": "Search by artist, title, label…",
+    "sortBy": "Sort by",
+    "sort": {
+      "newest": "Newest",
+      "artistAsc": "Artist (A–Z)",
+      "priceAsc": "Price (low to high)",
+      "priceDesc": "Price (high to low)"
+    },
+    "filters": "Filters",
+    "clearAll": "Clear all",
+    "genre": "Genre",
+    "format": "Format",
+    "condition": "Condition",
+    "grade": "Media grade",
+    "decade": "Decade",
+    "price": "Price (RSD)",
+    "new": "New",
+    "used": "Used",
+    "all": "All",
+    "inStockOnly": "In stock only",
+    "noResults": "No records found.",
+    "resultsCount": "{count} records"
+  },
+  "record": {
+    "inStock": "In stock",
+    "outOfStock": "Out of stock",
+    "condition": "Condition",
+    "format": "Format",
+    "new": "New",
+    "used": "Used",
+    "media": "Media",
+    "sleeve": "Sleeve",
+    "label": "Label",
+    "catalogNumber": "Cat. no.",
+    "year": "Year",
+    "country": "Country",
+    "callForPrice": "Call for price",
+    "callToOrder": "Call to order",
+    "backToCatalog": "Back to catalog"
+  },
+  "contact": {
+    "title": "Contact",
+    "phone": "Phone",
+    "instagram": "Instagram",
+    "email": "Email",
+    "address": "Address",
+    "hours": "Hours",
+    "orderNote": "Orders are taken by phone only — call us to reserve a record."
+  },
+  "common": {
+    "loading": "Loading…",
+    "language": "Language"
+  }
+}

@@ -1,36 +1,81 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Vinyl Store
 
-## Getting Started
+Bilingual (Serbian / English) catalog website for a vinyl record shop. Browse,
+search, sort, and filter records; see availability. **Orders are taken by phone
+only** — there is no cart or checkout. A password-protected admin panel manages
+the catalog.
 
-First, run the development server:
+## Stack
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+| Concern | Choice |
+| --- | --- |
+| Framework | Next.js 16 (App Router) + React 19 + TypeScript |
+| Styling | Tailwind CSS v4 |
+| Database | PostgreSQL on [Neon](https://neon.tech) |
+| ORM | Drizzle |
+| i18n | next-intl (`sr` default, `en`) — UI only; record data is entered once |
+| Auth | Auth.js v5 (credentials, single shared admin) |
+| Image storage | Cloudflare R2 (S3-compatible) |
+| Hosting | Vercel |
+
+Target running cost: **~$0–1/mo** (Neon + R2 free tiers, Vercel Hobby) + domain.
+
+## Project layout
+
+```
+app/
+  [locale]/            # public, localized site (sr/en)
+    page.tsx           # catalog (search / sort / filter)
+    records/[id]/      # record detail + "call to order"
+    contact/
+  admin/
+    login/             # sign-in (outside the auth guard)
+    (protected)/       # everything here requires a session
+      page.tsx         # dashboard (record list)
+      records/new, [id]# add / edit record
+  api/auth/[...nextauth]
+db/          schema.ts (Drizzle) + Neon client + migrations
+i18n/        routing, navigation, request config
+lib/         records queries, server actions, R2 storage
+messages/    en.json, sr.json
+proxy.ts     next-intl middleware (Next 16 renamed middleware → proxy)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Getting started
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. **Install** — `npm install`
+2. **Env** — copy `.env.example` to `.env.local` and fill in Neon, Auth.js, and R2 values.
+3. **Schema** — push the Drizzle schema to your Neon DB:
+   ```bash
+   npm run db:push        # or: db:generate + db:migrate for tracked migrations
+   ```
+4. **Admin user** — create the shared login:
+   ```bash
+   npm run create-admin -- admin@shop.rs "a-strong-password"
+   ```
+5. **Run** — `npm run dev` → http://localhost:3000 (redirects to `/sr`).
+   Admin at http://localhost:3000/admin.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Scripts
 
-## Learn More
+- `npm run dev` / `build` / `start`
+- `npm run typecheck` — `tsc --noEmit`
+- `npm run db:push | db:generate | db:migrate | db:studio`
+- `npm run create-admin -- <email> "<password>"`
 
-To learn more about Next.js, take a look at the following resources:
+## Decisions / notes
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Pricing is single-currency (RSD, whole dinars)** with a per-record "Call for price" toggle. Formatted via `lib/format.ts`.
+- **Serbian is Latin script only** — search is plain Postgres `ILIKE`; no
+  Cyrillic transliteration needed.
+- **Translations are UI-only.** Record fields (artist, title, description) are
+  stored once as entered; only chrome is bilingual via `messages/*.json`.
+- **Stock**: the public site shows only In stock / Out of stock; the real
+  quantity is admin-only.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Next steps (not yet built)
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Image upload** in the admin form via R2 presigned URLs (`lib/storage.ts`
+  has `presignUpload`); the uploader UI and an `images` write path are TODO.
+- **Genre tags** editing in the admin form (schema + join table already exist).
+- SEO niceties: per-record `generateMetadata`, sitemap, Open Graph images.
