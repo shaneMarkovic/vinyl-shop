@@ -7,7 +7,8 @@
   "home": {
     "kicker": "New & used vinyl",
     "headline": "Find your next favorite record.",
-    "subhead": "A hand-picked crate of new and second-hand vinyl. Browse, fall in love, then call us to reserve it.",
+    "subhead": "A hand-picked crate of new and second-hand vinyl. Browse, fall in love, then reach out on Instagram or by email to reserve your record.",
+    "contactPrompt": "Contact us",
     "browseCta": "Browse the catalog",
     "callCta": "Call to reserve",
     "featured": "Featured",

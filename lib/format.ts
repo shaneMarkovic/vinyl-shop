@@ -10,3 +10,15 @@ export function formatRsd(value: number | string | null | undefined): string {
   if (!Number.isFinite(n)) return "";
   return `${rsdFormatter.format(n)} RSD`;
 }
+
+// Display names for vinyl formats. The stored enum values stay as-is (e.g. 7",
+// 12") so existing data and filter URLs keep working; only the label shown to
+// people is friendlier. Anything not listed falls back to its raw value.
+const FORMAT_LABELS: Record<string, string> = {
+  '7"': "Singl ploča",
+  '12"': "Maxi Singl",
+};
+
+export function formatLabel(value: string): string {
+  return FORMAT_LABELS[value] ?? value;
+}

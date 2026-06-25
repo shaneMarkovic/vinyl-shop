@@ -2,9 +2,10 @@
 
 /*
   Vinyl Vibe design tokens.
-  Themes are swapped by setting `data-theme` on <html>. Each theme redefines the
-  same semantic variables, so every component styled with bg-background /
-  text-foreground / bg-accent etc. re-skins automatically.
+  The storefront uses the Analog Warmth skin; the admin chrome sets
+  `data-theme="minimal"` on <html> for a clean neutral surface. Each theme
+  redefines the same semantic variables, so every component styled with
+  bg-background / text-foreground / bg-accent etc. picks up the right skin.
 */
 
 @theme inline {
@@ -45,25 +46,7 @@
   --grain: 0.045;
 }
 
-/* --- After Hours ------------------------------------------------------- */
-[data-theme="afterhours"] {
-  --background: #0c0a09;
-  --foreground: #ece5da;
-  --card: #16130f;
-  --card-foreground: #ece5da;
-  --muted: #211c17;
-  --muted-foreground: #a89b8a;
-  --accent: #f0a830;
-  --accent-foreground: #1a1206;
-  --border: #2a241d;
-  --ring: #f0a830;
-  --radius: 0.4rem;
-  --display-font: var(--font-space-grotesk), system-ui, sans-serif;
-  --body-font: var(--font-geist-sans), system-ui, sans-serif;
-  --grain: 0;
-}
-
-/* --- Gallery Minimal --------------------------------------------------- */
+/* --- Gallery Minimal (admin chrome) ----------------------------------- */
 [data-theme="minimal"] {
   --background: #ffffff;
   --foreground: #0a0a0a;

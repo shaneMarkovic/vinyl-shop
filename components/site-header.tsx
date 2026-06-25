@@ -2,7 +2,6 @@ import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { Logo } from "./logo";
 import { LanguageSwitcher } from "./language-switcher";
-import { ThemeSwitcher } from "./theme-switcher";
 
 export function SiteHeader() {
   const t = useTranslations("nav");
@@ -22,7 +21,6 @@ export function SiteHeader() {
           </Link>
           <span className="hidden h-4 w-px bg-border sm:block" />
           <LanguageSwitcher />
-          <ThemeSwitcher />
         </nav>
       </div>
     </header>

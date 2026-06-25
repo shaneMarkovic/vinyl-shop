@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { usePathname, useRouter } from "@/i18n/navigation";
+import { formatLabel } from "@/lib/format";
 
 export const FORMATS = ["LP", "2xLP", '7"', '10"', '12"', "other"];
 export const CONDITIONS = ["5", "5-", "4+", "4", "4-", "3+", "3", "3-", "2", "1"];
@@ -112,7 +113,7 @@ export function CatalogFilters({ genres }: { genres: Genre[] }) {
 
       <Section title={t("format")}>
         {FORMATS.map((f) => (
-          <Check key={f} label={f} checked={has("format", f)} onChange={() => toggle("format", f)} />
+          <Check key={f} label={formatLabel(f)} checked={has("format", f)} onChange={() => toggle("format", f)} />
         ))}
       </Section>
 

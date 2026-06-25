@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Fraunces, Space_Grotesk } from "next/font/google";
-import { cookies } from "next/headers";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
-import { DEFAULT_THEME, THEME_COOKIE, isThemeId } from "@/lib/theme";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { getSettings } from "@/lib/settings";
@@ -43,17 +41,12 @@ export default async function LocaleLayout({
   if (!hasLocale(routing.locales, locale)) notFound();
   setRequestLocale(locale);
 
-  // Theme is persisted in a cookie so SSR renders the right skin (no flash).
-  const cookieStore = await cookies();
-  const themeCookie = cookieStore.get(THEME_COOKIE)?.value;
-  const theme = isThemeId(themeCookie) ? themeCookie : DEFAULT_THEME;
-
   const fontVars = `${geistSans.variable} ${geistMono.variable} ${fraunces.variable} ${spaceGrotesk.variable}`;
 
   const { announcement } = await getSettings();
 
   return (
-    <html lang={locale} data-theme={theme} className={`${fontVars} h-full antialiased`}>
+    <html lang={locale} data-theme="analog" className={`${fontVars} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <NextIntlClientProvider>
           {announcement && (

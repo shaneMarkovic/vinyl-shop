@@ -7,7 +7,8 @@
   "home": {
     "kicker": "Nove i polovne ploče",
     "headline": "Pronađi svoju sledeću omiljenu ploču.",
-    "subhead": "Pažljivo izabrana selekcija novih i polovnih ploča. Pregledajte, zaljubite se, pa nas pozovite da je rezervišete.",
+    "subhead": "Pažljivo izabrana selekcija novih i polovnih ploča. Pogledajte, zaljubite se, pa nas kontaktirajte putem Instagrama ili e-maila kako biste rezervisali svoju ploču.",
+    "contactPrompt": "Kontaktirajte nas",
     "browseCta": "Pogledaj katalog",
     "callCta": "Pozovi za rezervaciju",
     "featured": "Izdvojeno",

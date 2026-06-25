@@ -2,6 +2,7 @@
 
 import { useRef, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { formatLabel } from "@/lib/format";
 
 const FORMATS = ["LP", "2xLP", '7"', '10"', '12"', "other"];
 const SORTS = [
@@ -47,7 +48,7 @@ export function AdminToolbar({ total }: { total: number }) {
       />
       <select value={sp.get("format") ?? ""} onChange={(e) => set("format", e.target.value)} className={sel}>
         <option value="">All formats</option>
-        {FORMATS.map((f) => <option key={f} value={f}>{f}</option>)}
+        {FORMATS.map((f) => <option key={f} value={f}>{formatLabel(f)}</option>)}
       </select>
       <select value={sp.get("stock") ?? ""} onChange={(e) => set("stock", e.target.value)} className={sel}>
         <option value="">Any stock</option>

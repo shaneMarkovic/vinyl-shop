@@ -1,5 +1,6 @@
 import type { Record } from "@/db/schema";
 import { ImagePicker } from "@/components/admin/image-picker";
+import { formatLabel } from "@/lib/format";
 
 const FORMATS = ["LP", "2xLP", '7"', '10"', '12"', "other"];
 const CONDITIONS = ["5", "5-", "4+", "4", "4-", "3+", "3", "3-", "2", "1"];
@@ -47,7 +48,7 @@ export function RecordForm({
           <span className="text-neutral-700">Format</span>
           <select name="format" defaultValue={record?.format ?? "LP"} className={field}>
             {FORMATS.map((f) => (
-              <option key={f} value={f}>{f}</option>
+              <option key={f} value={f}>{formatLabel(f)}</option>
             ))}
           </select>
         </label>

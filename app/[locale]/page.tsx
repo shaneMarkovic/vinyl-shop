@@ -21,8 +21,6 @@ export default async function HomePage(props: {
     getTranslations("catalog"),
     getSettings(),
   ]);
-  const PHONE = settings.contactPhone;
-
   return (
     <div>
       {/* --- Hero ---------------------------------------------------------- */}
@@ -46,12 +44,36 @@ export default async function HomePage(props: {
               >
                 {t("browseCta")}
               </Link>
-              <a
-                href={`tel:${PHONE.replace(/\s/g, "")}`}
-                className="rounded-full border border-border px-6 py-3 text-sm font-medium hover:border-accent"
-              >
-                {t("callCta")} — {PHONE}
-              </a>
+            </div>
+            <div className="mt-8 border-t border-border pt-6">
+              <p className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
+                {t("contactPrompt")}
+              </p>
+              <div className="mt-3 flex flex-wrap gap-3">
+                <a
+                  href={`https://instagram.com/${settings.contactInstagram}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group inline-flex items-center gap-2.5 rounded-full border border-border bg-card px-4 py-2.5 text-sm font-medium transition-colors hover:border-accent hover:text-accent"
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="2" width="20" height="20" rx="5" />
+                    <circle cx="12" cy="12" r="4" />
+                    <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
+                  </svg>
+                  @{settings.contactInstagram}
+                </a>
+                <a
+                  href={`mailto:${settings.contactEmail}`}
+                  className="group inline-flex items-center gap-2.5 rounded-full border border-border bg-card px-4 py-2.5 text-sm font-medium transition-colors hover:border-accent hover:text-accent"
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2.5" y="4.5" width="19" height="15" rx="2.5" />
+                    <path d="m3.5 6.5 8.5 6 8.5-6" />
+                  </svg>
+                  {settings.contactEmail}
+                </a>
+              </div>
             </div>
           </div>
 

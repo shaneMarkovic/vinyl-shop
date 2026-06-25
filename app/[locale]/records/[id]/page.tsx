@@ -4,7 +4,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { getRecordById } from "@/lib/records";
 import { publicUrl } from "@/lib/storage";
-import { formatRsd } from "@/lib/format";
+import { formatRsd, formatLabel } from "@/lib/format";
 import { getSettings } from "@/lib/settings";
 
 export default async function RecordDetailPage(props: {
@@ -94,7 +94,7 @@ export default async function RecordDetailPage(props: {
             {record.catalogNumber && <Spec label={t("catalogNumber")} value={record.catalogNumber} />}
             {record.year && <Spec label={t("year")} value={record.year} />}
             {record.country && <Spec label={t("country")} value={record.country} />}
-            <Spec label={t("format")} value={record.format} />
+            <Spec label={t("format")} value={formatLabel(record.format)} />
             {!record.isNew && record.conditionMedia && (
               <Spec label={t("media")} value={record.conditionMedia} />
             )}
