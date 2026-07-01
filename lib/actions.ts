@@ -21,15 +21,35 @@ async function requireAuth() {
   if (!(await auth())) throw new Error("Unauthorized");
 }
 
+/**
+ * Public pages live under locale prefixes (/sr, /en) and the admin under
+ * /admin, so a page-level revalidatePath("/") reaches nothing real. Revalidate
+ * from the root down instead — cheap at this catalog's size.
+ */
+function revalidateStore() {
+  revalidatePath("/", "layout");
+}
+
 /** Replace a record's genres from a comma-separated list of names. */
 async function syncGenres(recordId: number, csv: string | null) {
   const names = [...new Set((csv ?? "").split(",").map((s) => s.trim()).filter(Boolean))];
-  await db.delete(recordGenres).where(eq(recordGenres.recordId, recordId));
-  for (const name of names) {
-    await db.insert(genres).values({ name }).onConflictDoNothing();
-    const [g] = await db.select({ id: genres.id }).from(genres).where(eq(genres.name, name)).limit(1);
-    if (g) await db.insert(recordGenres).values({ recordId, genreId: g.id }).onConflictDoNothing();
+  if (names.length === 0) {
+    await db.delete(recordGenres).where(eq(recordGenres.recordId, recordId));
+    return;
   }
+  // One upsert for all names; the no-op conflict update makes RETURNING yield
+  // ids for already-existing genres too.
+  const ids = await db
+    .insert(genres)
+    .values(names.map((name) => ({ name })))
+    .onConflictDoUpdate({ target: genres.name, set: { name: sql`excluded.name` } })
+    .returning({ id: genres.id });
+  // Swap the links in a single batch (one transaction on the neon-http driver)
+  // so a failure can't strand the record with its genres deleted.
+  await db.batch([
+    db.delete(recordGenres).where(eq(recordGenres.recordId, recordId)),
+    db.insert(recordGenres).values(ids.map(({ id }) => ({ recordId, genreId: id }))),
+  ]);
 }
 
 const recordSchema = z.object({
@@ -48,6 +68,22 @@ const recordSchema = z.object({
   quantity: z.coerce.number().int().min(0),
   description: z.string().optional(),
 });
+
+// Drizzle silently drops `undefined` entries from .set(), so optional fields
+// cleared in the form must become explicit NULLs or the old value would stick.
+function toRow(data: z.infer<typeof recordSchema>) {
+  return {
+    ...data,
+    label: data.label ?? null,
+    catalogNumber: data.catalogNumber ?? null,
+    year: data.year ?? null,
+    country: data.country ?? null,
+    conditionMedia: data.conditionMedia ?? null,
+    conditionSleeve: data.conditionSleeve ?? null,
+    priceRsd: data.priceRsd ?? null,
+    description: data.description ?? null,
+  };
+}
 
 function parse(formData: FormData) {
   const empty = (v: FormDataEntryValue | null) =>
@@ -76,11 +112,11 @@ export async function createRecord(formData: FormData) {
   const data = parse(formData);
   const [row] = await db
     .insert(records)
-    .values({ ...data, priceRsd: data.priceRsd ?? null })
+    .values(toRow(data))
     .returning({ id: records.id });
   await syncGenres(row.id, formData.get("genres") as string | null);
   await saveImages(row.id, imageFiles(formData));
-  revalidatePath("/admin");
+  revalidateStore();
   redirect("/admin");
 }
 
@@ -89,32 +125,34 @@ export async function updateRecord(id: number, formData: FormData) {
   const data = parse(formData);
   await db
     .update(records)
-    .set({ ...data, priceRsd: data.priceRsd ?? null, updatedAt: new Date() })
+    .set({ ...toRow(data), updatedAt: new Date() })
     .where(eq(records.id, id));
   await syncGenres(id, formData.get("genres") as string | null);
-  revalidatePath("/admin");
+  revalidateStore();
   redirect("/admin");
 }
 
 export async function deleteRecord(id: number) {
   await requireAuth();
   await db.delete(records).where(eq(records.id, id));
-  revalidatePath("/admin");
+  revalidateStore();
   redirect("/admin");
 }
 
 /** Make one image the cover (and clear the flag on the record's others). */
 export async function setCoverImage(recordId: number, imageId: number) {
   await requireAuth();
-  await db.update(images).set({ isCover: false }).where(eq(images.recordId, recordId));
-  await db.update(images).set({ isCover: true }).where(eq(images.id, imageId));
-  revalidatePath(`/admin/records/${recordId}`);
+  await db.batch([
+    db.update(images).set({ isCover: false }).where(eq(images.recordId, recordId)),
+    db.update(images).set({ isCover: true }).where(eq(images.id, imageId)),
+  ]);
+  revalidateStore();
 }
 
 export async function deleteImage(recordId: number, imageId: number) {
   await requireAuth();
   await db.delete(images).where(and(eq(images.id, imageId), eq(images.recordId, recordId)));
-  revalidatePath(`/admin/records/${recordId}`);
+  revalidateStore();
 }
 
 /** Pull non-empty uploaded image files off a submitted form. */
@@ -124,40 +162,61 @@ function imageFiles(formData: FormData): File[] {
     .filter((f): f is File => f instanceof File && f.size > 0);
 }
 
+// Only formats next/image can optimize; also caps how large one upload may be.
+const IMAGE_TYPES: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+  "image/avif": "avif",
+  "image/gif": "gif",
+};
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
+
 /** Upload image files to R2 and record them against a record. */
 async function saveImages(recordId: number, files: File[]) {
   if (files.length === 0) return;
   if (!isR2Configured()) throw new Error("R2 storage is not configured");
+
+  for (const file of files) {
+    if (!IMAGE_TYPES[file.type])
+      throw new Error(`Unsupported image type: ${file.type || "unknown"}`);
+    if (file.size > MAX_IMAGE_BYTES)
+      throw new Error(`Image too large (max 10MB): ${file.name}`);
+  }
 
   const existing = await db
     .select({ sortOrder: images.sortOrder })
     .from(images)
     .where(eq(images.recordId, recordId));
   let nextOrder = existing.reduce((m, i) => Math.max(m, i.sortOrder + 1), 0);
-  let hasCover = existing.length > 0; // keep the current cover; new uploads aren't cover
+  const hasCover = existing.length > 0; // keep the current cover; new uploads aren't cover
 
+  // Upload everything to R2 first, then insert the rows in one statement, so a
+  // failed upload can't leave rows pointing at objects that never made it.
+  const rows: (typeof images.$inferInsert)[] = [];
   for (const file of files) {
     const bytes = new Uint8Array(await file.arrayBuffer());
-    const ext = (file.type.split("/")[1] || "jpg").replace("jpeg", "jpg");
-    const key = `records/${recordId}/up-${Date.now()}-${nextOrder}.${ext}`;
-    await uploadObject(key, bytes, file.type || "image/jpeg");
-    await db.insert(images).values({ recordId, key, isCover: !hasCover, sortOrder: nextOrder });
-    hasCover = true;
+    const key = `records/${recordId}/up-${Date.now()}-${nextOrder}.${IMAGE_TYPES[file.type]}`;
+    await uploadObject(key, bytes, file.type);
+    rows.push({ recordId, key, isCover: !hasCover && rows.length === 0, sortOrder: nextOrder });
     nextOrder++;
   }
+  await db.insert(images).values(rows);
 }
 
 /** Upload one or more images for a record to R2 and record them. */
 export async function uploadImage(recordId: number, formData: FormData) {
   await requireAuth();
   await saveImages(recordId, imageFiles(formData));
-  revalidatePath(`/admin/records/${recordId}`);
+  revalidateStore();
 }
 
 export async function resolveIssue(id: number) {
   await requireAuth();
   await db.update(importIssues).set({ resolved: true }).where(eq(importIssues.id, id));
+  // Only admin pages show issues; no need to touch the public cache.
   revalidatePath("/admin/issues");
+  revalidatePath("/admin");
 }
 
 // --- Store settings --------------------------------------------------------
@@ -174,8 +233,7 @@ export async function updateSettings(formData: FormData) {
       .onConflictDoUpdate({ target: settings.key, set: { value, updatedAt: now } });
   }
   // Contact info / store name / banner appear across the public site.
-  revalidatePath("/", "layout");
-  revalidatePath("/admin/settings");
+  revalidateStore();
 }
 
 // --- Bulk record actions ---------------------------------------------------
@@ -186,20 +244,24 @@ export async function bulkDeleteRecords(ids: number[]) {
   await requireAuth();
   const valid = idsSchema.parse(ids);
   await db.delete(records).where(inArray(records.id, valid));
-  revalidatePath("/admin/records");
-  revalidatePath("/");
+  revalidateStore();
 }
 
-/** Set stock to in/out for many records at once (1 if marking in stock, else 0). */
+/**
+ * Mark many records in/out of stock. "In" bumps zero quantities to 1 but keeps
+ * real counts as they are; "out" zeroes the quantity.
+ */
 export async function bulkSetStock(ids: number[], inStock: boolean) {
   await requireAuth();
   const valid = idsSchema.parse(ids);
   await db
     .update(records)
-    .set({ quantity: inStock ? 1 : 0, updatedAt: new Date() })
+    .set({
+      quantity: inStock ? (sql`greatest(${records.quantity}, 1)` as never) : 0,
+      updatedAt: new Date(),
+    })
     .where(inArray(records.id, valid));
-  revalidatePath("/admin/records");
-  revalidatePath("/");
+  revalidateStore();
 }
 
 /** Adjust prices by a flat amount (delta, can be negative) or a percentage. */
@@ -231,8 +293,7 @@ export async function bulkAdjustPrice(
     .update(records)
     .set({ priceRsd: next as never, updatedAt: new Date() })
     .where(where);
-  revalidatePath("/admin/records");
-  revalidatePath("/");
+  revalidateStore();
 }
 
 // --- Genre management ------------------------------------------------------
@@ -254,16 +315,14 @@ export async function renameGenre(id: number, name: string) {
     return;
   }
   await db.update(genres).set({ name: clean }).where(eq(genres.id, id));
-  revalidatePath("/admin/genres");
-  revalidatePath("/");
+  revalidateStore();
 }
 
 export async function deleteGenre(id: number) {
   await requireAuth();
   // record_genres rows cascade on the FK; the records themselves stay.
   await db.delete(genres).where(eq(genres.id, id));
-  revalidatePath("/admin/genres");
-  revalidatePath("/");
+  revalidateStore();
 }
 
 /** Move every record from `sourceId` onto `targetId`, then drop the source. */
@@ -274,13 +333,12 @@ export async function mergeGenres(sourceId: number, targetId: number) {
     .select({ recordId: recordGenres.recordId })
     .from(recordGenres)
     .where(eq(recordGenres.genreId, sourceId));
-  for (const { recordId } of links) {
+  if (links.length > 0) {
     await db
       .insert(recordGenres)
-      .values({ recordId, genreId: targetId })
+      .values(links.map(({ recordId }) => ({ recordId, genreId: targetId })))
       .onConflictDoNothing();
   }
   await db.delete(genres).where(eq(genres.id, sourceId));
-  revalidatePath("/admin/genres");
-  revalidatePath("/");
+  revalidateStore();
 }

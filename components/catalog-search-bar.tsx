@@ -26,6 +26,7 @@ export function CatalogSearchBar({
   function push(mutate: (p: URLSearchParams) => void) {
     const params = new URLSearchParams(sp.toString());
     mutate(params);
+    params.delete("page"); // a new search/sort restarts at page 1
     startTransition(() => router.push(`${pathname}?${params.toString()}`, { scroll: false }));
   }
 

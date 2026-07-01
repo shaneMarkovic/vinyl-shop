@@ -1,11 +1,26 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { getFeatured, getNewArrivals, getGenresWithCounts } from "@/lib/records";
 import { publicUrl } from "@/lib/storage";
+import { pageAlternates } from "@/lib/seo";
 import { RecordRow } from "@/components/record-row";
 import { VinylMark } from "@/components/logo";
 import { getSettings } from "@/lib/settings";
+
+// Prerendered with ISR: admin mutations revalidate immediately (revalidateStore
+// in lib/actions), and the periodic refresh keeps the random featured pick
+// rotating instead of freezing at build time.
+export const revalidate = 300;
+
+export async function generateMetadata(props: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await props.params;
+  // Title/description come from the locale layout; this adds canonical + hreflang.
+  return { alternates: pageAlternates("/", locale) };
+}
 
 export default async function HomePage(props: {
   params: Promise<{ locale: string }>;

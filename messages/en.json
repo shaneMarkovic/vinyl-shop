@@ -67,6 +67,26 @@
     "hours": "Hours",
     "orderNote": "Orders are taken by phone only — call us to reserve a record."
   },
+  "formats": {
+    "lp": "LP",
+    "lp2": "2×LP",
+    "single7": "7″ single",
+    "lp10": "10″",
+    "maxi12": "12″ maxi single",
+    "other": "Other"
+  },
+  "errors": {
+    "notFoundTitle": "Page not found",
+    "notFoundText": "The page you're looking for doesn't exist — the record may have been sold or removed.",
+    "browseCatalog": "Browse the catalog",
+    "errorTitle": "Something went wrong",
+    "errorText": "An unexpected error occurred. Please try again.",
+    "retry": "Try again"
+  },
+  "meta": {
+    "title": "{storeName} — New & used vinyl records",
+    "description": "Curated new & used vinyl. Browse the crates, call to reserve."
+  },
   "common": {
     "loading": "Loading…",
     "language": "Language"

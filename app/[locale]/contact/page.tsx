@@ -1,5 +1,18 @@
+import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { getSettings } from "@/lib/settings";
+import { pageAlternates } from "@/lib/seo";
+
+export async function generateMetadata(props: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await props.params;
+  const t = await getTranslations({ locale, namespace: "contact" });
+  return {
+    title: t("title"),
+    alternates: pageAlternates("/contact", locale),
+  };
+}
 
 export default async function ContactPage(props: {
   params: Promise<{ locale: string }>;

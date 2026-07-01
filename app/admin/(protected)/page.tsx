@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { requireAdmin } from "@/auth";
 import { getAdminStats } from "@/lib/records";
 import { formatRsd } from "@/lib/format";
 
@@ -31,6 +32,7 @@ function Stat({
 }
 
 export default async function AdminDashboard() {
+  await requireAdmin();
   const stats = await getAdminStats();
 
   return (

@@ -1,6 +1,6 @@
 import "./load-env"; // must be first — loads .env.local before ../db reads env
 import * as cheerio from "cheerio";
-import { and, asc, eq, notInArray } from "drizzle-orm";
+import { and, asc, eq, notInArray, sql } from "drizzle-orm";
 import { db, records, genres, recordGenres, importIssues, images as imagesTable } from "../db";
 import { isR2Configured, uploadObject } from "../lib/storage";
 import { mapGenres } from "../lib/genre-map";
@@ -12,8 +12,8 @@ import { extractFromDescription } from "../lib/llm-extract";
   For each record flagged needsEnrichment=true (or all kupindo records with
   --force), fetches its detail page and fills in: year, format (Tip), genres
   (Žanr → canonical via lib/genre-map), label (Izdavač), new/used (Stanje),
-  condition grades (PLOČA / OMOT → Goldmine), description, and the full photo
-  gallery.
+  condition grades (PLOČA / OMOT, Kupindo's 1–5 scale), description, and the
+  full photo gallery.
 
   Marketplace data is hand-entered, so anything that can't be parsed
   confidently is logged to import_issues for review in /admin/issues.
@@ -147,22 +147,42 @@ async function fetchHtml(url: string): Promise<string> {
   return "";
 }
 
-async function genreId(name: string): Promise<number> {
-  await db.insert(genres).values({ name }).onConflictDoNothing();
-  const [g] = await db.select({ id: genres.id }).from(genres).where(eq(genres.name, name)).limit(1);
-  return g.id;
+/** Replace a record's genre links with the given names (upserting genres). */
+async function storeGenres(recordId: number, names: string[]): Promise<void> {
+  // One upsert for all names; the no-op conflict update makes RETURNING yield
+  // ids for already-existing genres too.
+  const ids = await db
+    .insert(genres)
+    .values(names.map((name) => ({ name })))
+    .onConflictDoUpdate({ target: genres.name, set: { name: sql`excluded.name` } })
+    .returning({ id: genres.id });
+  // Swap the links in a single batch (one transaction on the neon-http driver)
+  // so a failure can't strand the record with its genres deleted.
+  await db.batch([
+    db.delete(recordGenres).where(eq(recordGenres.recordId, recordId)),
+    db.insert(recordGenres).values(ids.map(({ id }) => ({ recordId, genreId: id }))),
+  ]);
 }
 
+/**
+ * Replace a record's images. All fetches/uploads happen BEFORE the DB rows are
+ * touched, and the delete+insert runs as one batch (a transaction on the
+ * neon-http driver) — a mid-run failure can't leave the record image-less.
+ */
 async function storeImages(recordId: number, urls: string[]): Promise<void> {
-  await db.delete(imagesTable).where(eq(imagesTable.recordId, recordId));
+  const keys: string[] = [];
   for (let i = 0; i < urls.length; i++) {
     let key = urls[i];
     if (copyToR2) {
       const res = await fetch(urls[i], { headers: { "User-Agent": UA } });
       key = await uploadObject(`records/${recordId}/${i}.jpg`, new Uint8Array(await res.arrayBuffer()), "image/jpeg");
     }
-    await db.insert(imagesTable).values({ recordId, key, isCover: i === 0, sortOrder: i });
+    keys.push(key);
   }
+  await db.batch([
+    db.delete(imagesTable).where(eq(imagesTable.recordId, recordId)),
+    db.insert(imagesTable).values(keys.map((key, i) => ({ recordId, key, isCover: i === 0, sortOrder: i }))),
+  ]);
 }
 
 let issueCount = 0;
@@ -222,6 +242,12 @@ async function main() {
       continue;
     }
 
+    // Genres and images first; the record update that clears needsEnrichment
+    // runs LAST, so a mid-run failure leaves the flag set and the record is
+    // actually retried on the next batch.
+    if (genreList.length) await storeGenres(r.id, genreList);
+    if (d.imageUrls.length) await storeImages(r.id, d.imageUrls);
+
     await db
       .update(records)
       .set({
@@ -236,15 +262,6 @@ async function main() {
         updatedAt: new Date(),
       })
       .where(eq(records.id, r.id));
-
-    if (genreList.length) {
-      await db.delete(recordGenres).where(eq(recordGenres.recordId, r.id));
-      for (const name of genreList) {
-        const gid = await genreId(name);
-        await db.insert(recordGenres).values({ recordId: r.id, genreId: gid }).onConflictDoNothing();
-      }
-    }
-    if (d.imageUrls.length) await storeImages(r.id, d.imageUrls);
 
     // --- Track inconsistencies for human review --------------------------
     if (unmapped) await logIssue(r.id, r.externalId, "genre", "unmapped", unmapped);

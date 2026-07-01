@@ -1,3 +1,4 @@
+import { cache } from "react";
 import {
   and,
   asc,
@@ -12,7 +13,19 @@ import {
   sql,
   type SQL,
 } from "drizzle-orm";
-import { db, records, images, genres, recordGenres, importIssues } from "@/db";
+import {
+  db,
+  records,
+  images,
+  genres,
+  recordGenres,
+  importIssues,
+  formatEnum,
+} from "@/db";
+
+// User-supplied format strings must be whitelisted before they reach the pg
+// enum — an unknown value makes Postgres error out, not just match zero rows.
+const VALID_FORMATS = new Set<string>(formatEnum.enumValues);
 
 export type SortKey = "newest" | "artistAsc" | "priceAsc" | "priceDesc";
 
@@ -36,7 +49,8 @@ const ORDER_BY: Record<SortKey, SQL> = {
   newest: desc(records.createdAt),
   artistAsc: asc(records.artist),
   priceAsc: asc(records.priceRsd),
-  priceDesc: desc(records.priceRsd),
+  // Plain DESC would list NULL (call-for-price) rows first; push them last.
+  priceDesc: sql`${records.priceRsd} desc nulls last`,
 };
 
 /**
@@ -67,8 +81,9 @@ function buildConditions(query: CatalogQuery): SQL[] {
     conditions.push(inArray(records.id, sub));
   }
 
-  if (query.formats?.length)
-    conditions.push(inArray(records.format, query.formats as never[]));
+  const formats = query.formats?.filter((f) => VALID_FORMATS.has(f));
+  if (formats?.length)
+    conditions.push(inArray(records.format, formats as never[]));
   if (query.conditions?.length)
     conditions.push(inArray(records.conditionMedia, query.conditions as never[]));
   if (query.condition === "new") conditions.push(eq(records.isNew, true));
@@ -185,7 +200,8 @@ function adminConditions(query: AdminQuery): SQL[] {
       )!,
     );
   }
-  if (query.format) conditions.push(eq(records.format, query.format as never));
+  if (query.format && VALID_FORMATS.has(query.format))
+    conditions.push(eq(records.format, query.format as never));
   if (query.stock === "in") conditions.push(gt(records.quantity, 0));
   if (query.stock === "out") conditions.push(eq(records.quantity, 0));
   if (query.enrichment === "pending") conditions.push(eq(records.needsEnrichment, true));
@@ -319,8 +335,11 @@ export async function getGenresWithCounts() {
   return rows;
 }
 
-/** Full record detail with images and genres, or null if not found. */
-export async function getRecordById(id: number) {
+/**
+ * Full record detail with images and genres, or undefined if not found.
+ * Wrapped in React cache() so a page and its generateMetadata share one query.
+ */
+export const getRecordById = cache(async (id: number) => {
   return db.query.records.findFirst({
     where: eq(records.id, id),
     with: {
@@ -328,4 +347,4 @@ export async function getRecordById(id: number) {
       recordGenres: { with: { genre: true } },
     },
   });
-}
+});

@@ -11,9 +11,9 @@ export function formatRsd(value: number | string | null | undefined): string {
   return `${rsdFormatter.format(n)} RSD`;
 }
 
-// Display names for vinyl formats. The stored enum values stay as-is (e.g. 7",
-// 12") so existing data and filter URLs keep working; only the label shown to
-// people is friendlier. Anything not listed falls back to its raw value.
+// Display names for vinyl formats in the ADMIN UI (single-language). The
+// stored enum values stay as-is (e.g. 7", 12") so existing data and filter
+// URLs keep working. Anything not listed falls back to its raw value.
 const FORMAT_LABELS: Record<string, string> = {
   '7"': "Singl ploča",
   '12"': "Maxi Singl",
@@ -21,4 +21,20 @@ const FORMAT_LABELS: Record<string, string> = {
 
 export function formatLabel(value: string): string {
   return FORMAT_LABELS[value] ?? value;
+}
+
+// The PUBLIC site localizes format names through next-intl instead. The raw
+// enum values contain `"` which makes poor message keys, so map them to stable
+// slugs used as t(`formats.${formatKey(value)}`) — see messages/*.json.
+const FORMAT_KEYS: Record<string, string> = {
+  LP: "lp",
+  "2xLP": "lp2",
+  '7"': "single7",
+  '10"': "lp10",
+  '12"': "maxi12",
+  other: "other",
+};
+
+export function formatKey(value: string): string {
+  return FORMAT_KEYS[value] ?? "other";
 }

@@ -67,6 +67,26 @@
     "hours": "Radno vreme",
     "orderNote": "Porudžbine se primaju isključivo telefonom — pozovite nas da rezervišete ploču."
   },
+  "formats": {
+    "lp": "LP",
+    "lp2": "2×LP",
+    "single7": "Singl ploča",
+    "lp10": "10″",
+    "maxi12": "Maksi singl",
+    "other": "Ostalo"
+  },
+  "errors": {
+    "notFoundTitle": "Stranica nije pronađena",
+    "notFoundText": "Tražena stranica ne postoji — ploča je možda prodata ili uklonjena.",
+    "browseCatalog": "Pogledaj katalog",
+    "errorTitle": "Nešto je pošlo naopako",
+    "errorText": "Došlo je do neočekivane greške. Pokušajte ponovo.",
+    "retry": "Pokušaj ponovo"
+  },
+  "meta": {
+    "title": "{storeName} — Nove i polovne gramofonske ploče",
+    "description": "Pažljivo izabrane nove i polovne ploče. Pogledajte ponudu, pozovite da rezervišete."
+  },
   "common": {
     "loading": "Učitavanje…",
     "language": "Jezik"

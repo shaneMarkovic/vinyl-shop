@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { desc, eq, sql } from "drizzle-orm";
+import { requireAdmin } from "@/auth";
 import { db, importIssues, records } from "@/db";
 import { resolveIssue } from "@/lib/actions";
 
@@ -11,6 +12,7 @@ const LABELS: Record<string, string> = {
 };
 
 export default async function IssuesPage() {
+  await requireAdmin();
   // Summary by field + issue.
   const summary = await db
     .select({

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import {
   getRecords,
@@ -6,10 +7,26 @@ import {
   type CatalogQuery,
   type SortKey,
 } from "@/lib/records";
+import { pageAlternates } from "@/lib/seo";
 import { RecordCard } from "@/components/record-card";
 import { CatalogFilters } from "@/components/catalog-filters";
 import { CatalogSearchBar } from "@/components/catalog-search-bar";
 import { Pagination } from "@/components/pagination";
+
+// The catalog is driven by search params (filters, search, pagination), so it
+// is always rendered per request — don't attempt to prerender a static shell.
+export const dynamic = "force-dynamic";
+
+export async function generateMetadata(props: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await props.params;
+  const t = await getTranslations({ locale, namespace: "catalog" });
+  return {
+    title: t("title"),
+    alternates: pageAlternates("/catalog", locale),
+  };
+}
 
 const SORTS: SortKey[] = ["newest", "artistAsc", "priceAsc", "priceDesc"];
 const PAGE_SIZE = 24;

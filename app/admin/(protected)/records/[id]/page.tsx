@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { requireAdmin } from "@/auth";
 import { getRecordById } from "@/lib/records";
 import { publicUrl } from "@/lib/storage";
 import {
@@ -15,6 +16,7 @@ import { ImagePicker } from "@/components/admin/image-picker";
 export default async function EditRecordPage(props: {
   params: Promise<{ id: string }>;
 }) {
+  await requireAdmin();
   const { id } = await props.params;
   const recordId = Number(id);
   if (!Number.isInteger(recordId)) notFound();

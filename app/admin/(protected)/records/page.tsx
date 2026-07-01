@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { requireAdmin } from "@/auth";
 import {
   getAdminRecords,
   countAdminRecords,
@@ -21,6 +22,7 @@ function one(v: string | string[] | undefined): string | undefined {
 export default async function AdminRecordsPage(props: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  await requireAdmin();
   const sp = await props.searchParams;
   const page = Math.max(1, Number(one(sp.page)) || 1);
   const sortRaw = one(sp.sort);

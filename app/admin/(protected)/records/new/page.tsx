@@ -1,8 +1,10 @@
 import Link from "next/link";
+import { requireAdmin } from "@/auth";
 import { createRecord } from "@/lib/actions";
 import { RecordForm } from "@/components/admin/record-form";
 
-export default function NewRecordPage() {
+export default async function NewRecordPage() {
+  await requireAdmin();
   return (
     <div>
       <Link href="/admin" className="text-sm text-black/60 hover:underline">

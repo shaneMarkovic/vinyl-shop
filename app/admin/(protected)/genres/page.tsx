@@ -1,8 +1,10 @@
 import Link from "next/link";
+import { requireAdmin } from "@/auth";
 import { getAllGenresWithCounts } from "@/lib/records";
 import { GenreManager } from "@/components/admin/genre-manager";
 
 export default async function GenresPage() {
+  await requireAdmin();
   const genres = await getAllGenresWithCounts();
 
   return (

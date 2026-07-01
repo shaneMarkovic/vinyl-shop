@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { requireAdmin } from "@/auth";
 import { getSettings } from "@/lib/settings";
 import { updateSettings } from "@/lib/actions";
 
@@ -7,6 +8,7 @@ const field =
 const labelCls = "block text-sm";
 
 export default async function SettingsPage() {
+  await requireAdmin();
   const s = await getSettings();
 
   return (

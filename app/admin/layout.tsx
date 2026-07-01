@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
+import "../globals.css";
 
 export const metadata: Metadata = {
   title: "Admin · Vinyl Vibe",
 };
 
-// Admin is outside the [locale] segment, so it needs its own <html>/<body>
-// (the public site gets these from app/[locale]/layout.tsx). No auth guard here
-// — that lives in (protected)/layout.tsx so /admin/login stays accessible.
+// Root layout for the admin tree. There is intentionally NO app/layout.tsx —
+// this and app/[locale]/layout.tsx are separate root layouts (each owns its
+// own <html>/<body>). No auth guard here — that lives in (protected)/layout.tsx
+// so /admin/login stays accessible.
 // data-theme="minimal" gives a clean, neutral admin chrome with no paper grain.
 export default function AdminLayout({
   children,

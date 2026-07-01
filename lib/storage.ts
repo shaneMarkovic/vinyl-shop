@@ -50,6 +50,12 @@ export function publicUrl(key: string): string {
   if (key.startsWith("http") || key.startsWith("/")) return key;
   // Tolerate NEXT_PUBLIC_R2_PUBLIC_HOST with or without a scheme / trailing slash.
   const host = publicHost.replace(/^https?:\/\//, "").replace(/\/$/, "");
+  if (!host) {
+    // Fail loudly: a silent fallback would render broken "https:///…" URLs.
+    throw new Error(
+      "NEXT_PUBLIC_R2_PUBLIC_HOST is not set — cannot build image URLs for R2 keys",
+    );
+  }
   return `https://${host}/${key}`;
 }
 

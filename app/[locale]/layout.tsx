@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Fraunces, Space_Grotesk } from "next/font/google";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
-import { setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { getSettings } from "@/lib/settings";
+import { siteUrl } from "@/lib/site";
+import "../globals.css";
 
 // `latin-ext` covers Serbian latinica diacritics: č ć š ž đ.
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin", "latin-ext"] });
@@ -21,15 +23,33 @@ const spaceGrotesk = Space_Grotesk({
   subsets: ["latin", "latin-ext"],
 });
 
-export const metadata: Metadata = {
-  title: "Vinyl Vibe — Records",
-  description: "Curated new & used vinyl. Browse the crates, call to reserve.",
-};
+export async function generateMetadata(props: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await props.params;
+  const [t, { storeName }] = await Promise.all([
+    getTranslations({ locale, namespace: "meta" }),
+    getSettings(),
+  ]);
+  return {
+    metadataBase: new URL(siteUrl),
+    title: {
+      default: t("title", { storeName }),
+      // Pages that set their own title (e.g. a record) get "Title · Store".
+      template: `%s · ${storeName}`,
+    },
+    description: t("description"),
+  };
+}
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
 }
 
+// Root layout for the public site. There is intentionally NO app/layout.tsx:
+// this and app/admin/layout.tsx are separate root layouts (each owns its own
+// <html>/<body>), which is the supported way to give the two trees different
+// document shells.
 export default async function LocaleLayout({
   children,
   params,

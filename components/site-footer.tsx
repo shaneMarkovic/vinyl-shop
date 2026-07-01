@@ -35,7 +35,7 @@ export async function SiteFooter() {
           </a>
         </div>
         <p className="mt-8 text-xs text-muted-foreground">
-          © {new Date().getFullYear()} Vinyl Vibe
+          © {new Date().getFullYear()} {settings.storeName}
         </p>
       </div>
     </footer>

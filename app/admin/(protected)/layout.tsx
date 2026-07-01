@@ -1,16 +1,15 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { auth, signOut } from "@/auth";
+import { requireAdmin, signOut } from "@/auth";
 
 // Guards every page in the (protected) group. /admin/login lives OUTSIDE this
-// group, so there's no redirect loop.
+// group, so there's no redirect loop. Each page also calls requireAdmin()
+// itself — don't rely on the layout alone to protect new pages.
 export default async function ProtectedAdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth();
-  if (!session) redirect("/admin/login");
+  await requireAdmin();
 
   return (
     <div className="min-h-screen bg-neutral-50 text-neutral-900">

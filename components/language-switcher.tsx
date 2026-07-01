@@ -14,13 +14,18 @@ export function LanguageSwitcher() {
   const pathname = usePathname();
   const router = useRouter();
 
+  // Keep active filters/search when switching language. Read at click time
+  // (not via useSearchParams) so the header stays statically prerenderable.
+  const switchTo = (code: Locale) =>
+    router.replace(`${pathname}${window.location.search}`, { locale: code });
+
   return (
     <div className="flex items-center gap-1 text-sm">
       {LOCALES.map(({ code, label }, i) => (
         <span key={code} className="flex items-center gap-1">
           {i > 0 && <span className="text-foreground/30">/</span>}
           <button
-            onClick={() => router.replace(pathname, { locale: code })}
+            onClick={() => switchTo(code)}
             className={
               code === locale
                 ? "font-semibold underline underline-offset-4"

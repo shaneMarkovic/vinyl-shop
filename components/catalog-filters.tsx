@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { usePathname, useRouter } from "@/i18n/navigation";
-import { formatLabel } from "@/lib/format";
+import { formatKey } from "@/lib/format";
 
 export const FORMATS = ["LP", "2xLP", '7"', '10"', '12"', "other"];
 export const CONDITIONS = ["5", "5-", "4+", "4", "4-", "3+", "3", "3-", "2", "1"];
@@ -12,8 +12,32 @@ export const DECADES = [1960, 1970, 1980, 1990, 2000, 2010, 2020];
 
 type Genre = { id: number; name: string; count: number };
 
+// Module-scope so React doesn't remount them (and reset <details>/focus state)
+// on every filter change.
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <details open className="border-b border-border py-4">
+      <summary className="cursor-pointer list-none text-sm font-semibold uppercase tracking-wide marker:hidden">
+        {title}
+      </summary>
+      <div className="mt-3 space-y-2">{children}</div>
+    </details>
+  );
+}
+
+function Check({ checked, onChange, label, count }: { checked: boolean; onChange: () => void; label: string; count?: number }) {
+  return (
+    <label className="flex cursor-pointer items-center gap-2 text-sm">
+      <input type="checkbox" checked={checked} onChange={onChange} className="accent-[var(--accent)]" />
+      <span className="flex-1">{label}</span>
+      {count != null && <span className="text-xs text-muted-foreground">{count}</span>}
+    </label>
+  );
+}
+
 export function CatalogFilters({ genres }: { genres: Genre[] }) {
   const t = useTranslations("catalog");
+  const tf = useTranslations("formats");
   const sp = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();
@@ -24,6 +48,7 @@ export function CatalogFilters({ genres }: { genres: Genre[] }) {
   function update(mutate: (p: URLSearchParams) => void) {
     const params = new URLSearchParams(sp.toString());
     mutate(params);
+    params.delete("page"); // any filter change restarts at page 1
     startTransition(() => {
       router.push(`${pathname}?${params.toString()}`, { scroll: false });
     });
@@ -54,23 +79,6 @@ export function CatalogFilters({ genres }: { genres: Genre[] }) {
 
   const clearAll = () =>
     startTransition(() => router.push(pathname, { scroll: false }));
-
-  const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
-    <details open className="border-b border-border py-4">
-      <summary className="cursor-pointer list-none text-sm font-semibold uppercase tracking-wide marker:hidden">
-        {title}
-      </summary>
-      <div className="mt-3 space-y-2">{children}</div>
-    </details>
-  );
-
-  const Check = ({ checked, onChange, label, count }: { checked: boolean; onChange: () => void; label: string; count?: number }) => (
-    <label className="flex cursor-pointer items-center gap-2 text-sm">
-      <input type="checkbox" checked={checked} onChange={onChange} className="accent-[var(--accent)]" />
-      <span className="flex-1">{label}</span>
-      {count != null && <span className="text-xs text-muted-foreground">{count}</span>}
-    </label>
-  );
 
   const panel = (
     <div className="text-foreground">
@@ -113,7 +121,7 @@ export function CatalogFilters({ genres }: { genres: Genre[] }) {
 
       <Section title={t("format")}>
         {FORMATS.map((f) => (
-          <Check key={f} label={formatLabel(f)} checked={has("format", f)} onChange={() => toggle("format", f)} />
+          <Check key={f} label={tf(formatKey(f))} checked={has("format", f)} onChange={() => toggle("format", f)} />
         ))}
       </Section>
 
